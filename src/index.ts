@@ -1,19 +1,45 @@
 import http from "http"
 
+String.prototype.toTitleCase = function (): string {
+    function capitalize(str: String) {
+        return str.charAt(0).toUpperCase() + str.substring(1, str.length).toLowerCase();
+    }
+
+    function titleCase(str: String) {
+        return str.replace(/[^\ \/\-\_]+/g, capitalize);
+    }
+
+    return titleCase(this)
+}
+
 const handler = (req: http.IncomingMessage, res: http.ServerResponse) => {
-    const rawHeaders = req.rawHeaders
-    const formattedHeaders = rawHeaders.reduce(
-        (prev, curr, index) =>
-            index % 2 === 0 ?
-            prev + curr
-            : prev + ': ' + curr + '\n',
-        '')
 
-    const url = req.url
-    const method = req.method
+    const { method, url, headers } = req
 
-    res.write(`${method} ${url}\n`)
-    res.write(formattedHeaders)
+    const plainText =
+        [
+            '---- TCP Info ----',
+            req.socket.remoteFamily,
+            req.socket.remoteAddress,
+            req.socket.remotePort,
+            ,
+            '---- HTTP Request ----',
+            method + ' ' + url,
+            ,
+            'Body Length: ' + req.readableLength,
+            ,
+            Object.entries(headers).map(([k, v]) => `:: ${k.toTitleCase()} ::\n${v}`).join('\n\n'),
+            ,
+            '---- Server Time ----',
+            new Date(),
+            ,
+            Date.now(),
+            ,
+            new Date().toJSON(),
+            ,
+        ].join('\n') + '\n'
+
+    res.write(plainText)
     res.end()
 }
 
@@ -22,6 +48,7 @@ const server = http.createServer((req, res) => {
         handler(req, res)
     } catch {
         res.statusCode = 500
+        res.write('Internal Error')
         res.end()
     }
 })
