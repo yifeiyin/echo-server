@@ -1,3 +1,3 @@
 interface String {
-    toTitleCase(): string;
+  toTitleCase(): string;
 }
